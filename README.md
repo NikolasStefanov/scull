@@ -1,5 +1,5 @@
 "I pledge my honor that I have abided by the Stevens Honor System."
 
-Name: <your name>
+Name: Nikolas Stefanov
 
-Repo: <url to repo>
+Repo: https://github.com/NikolasStefanov/scull.git
