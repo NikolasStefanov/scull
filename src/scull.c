@@ -136,7 +136,7 @@ static void* thread_k_case(void* fd){
 	ret = ioctl(good_fd, SCULL_IOCKQUANTUM, taskTest);
 	//On success, print info
 	if(ret == 0){
-		printf("state: %ld, stack %lx, cpu %d, prio %d, sprio %d, nprio %d, rtprio %d, pid %d, tgid %d, nvcsw %lu, nivscw %lu\n",
+		printf("state: %ld, stack %lx, cpu %d, prio %d, sprio %d, nprio %d, rtprio %d, pid %d, tgid %d, nv %lu, niv %lu\n",
 			taskTest->state, (long)taskTest->stack, taskTest->cpu, taskTest->prio,
 			taskTest->static_prio, taskTest->normal_prio, taskTest->rt_priority,
 			taskTest->pid, taskTest->tgid, taskTest->nvcsw, taskTest->nivcsw);
