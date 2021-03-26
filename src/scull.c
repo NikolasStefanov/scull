@@ -61,6 +61,7 @@ static cmd_t parse_arguments(int argc, const char **argv)
 		g_quantum = atoi(argv[2]);
 		if(g_quantum > 10 || g_quantum < 1){
 			fprintf(stderr, "num_processes not between 0 and 11");
+			return -1;
 		}
 		break;
 	case 't':
@@ -73,6 +74,7 @@ static cmd_t parse_arguments(int argc, const char **argv)
 		g_quantum = atoi(argv[2]);
 		if(g_quantum > 10 || g_quantum < 1){
 			fprintf(stderr, "num_threads not between 0 and 11");
+			return -1;
 		}
 		break;
 	case 'X':
@@ -86,7 +88,6 @@ static cmd_t parse_arguments(int argc, const char **argv)
 	case 'R':
 	case 'G':
 	case 'Q':
-	case 'K':
 	case 'h':
 		break;
 	default:
@@ -153,7 +154,6 @@ static void* thread_k_case(void* fd){
 static int do_op(int fd, cmd_t cmd)
 {
 	int ret, q;
-	struct task_info* taskTest;
 	int num_procs;
 	int num_threads;
 	int i;
@@ -200,19 +200,6 @@ static int do_op(int fd, cmd_t cmd)
 		printf("Quantum shifted, old quantum: %d\n", q);
 		ret = 0;
 		break;
-	case 'K':
-		//Runs 1 step of adding Node to the linked list and receiving task_struct
-		taskTest = (struct task_info*)malloc(sizeof(struct task_info));
-		ret = ioctl(fd, SCULL_IOCKQUANTUM, taskTest);
-		if(ret == 0){
-			printf("state: %ld, stack %lx, cpu %d, prio %d, sprio %d, nprio %d, rtprio %d, pid %d, tgid %d, nv %lu, niv %lu\n", 
-				taskTest->state, (long)taskTest->stack, taskTest->cpu,
-				taskTest->prio, taskTest->static_prio, taskTest->normal_prio,
-				taskTest->rt_priority, taskTest->pid, taskTest->tgid,
-				taskTest->nvcsw, taskTest->nivcsw);
-		}
-		free(taskTest);
-		break;
 	case 'p':
 		ret = 0;
 		num_procs = g_quantum;
@@ -244,8 +231,7 @@ static int do_op(int fd, cmd_t cmd)
 	case 't':
 		ret = 0;
 		num_threads = g_quantum;
-		//Create an array of threads to be passed into pthread_create
-		tid = (pthread_t *)malloc(num_threads*sizeof(pthread_t));
+		tid= (pthread_t*)malloc(sizeof(pthread_t)*num_threads);
 		for(i=0;i<num_threads;i++){
 			//Create all of the threads and get them to run thread_k_case
 			if((retval = pthread_create(&tid[i], NULL, thread_k_case,(void*) fd) != 0)){
