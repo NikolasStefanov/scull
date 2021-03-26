@@ -34,6 +34,23 @@
 #endif
 
 
+
+struct task_info {
+	long state;
+	void *stack;
+	unsigned int cpu;
+	int prio;
+	int static_prio;
+	int normal_prio;
+	unsigned int rt_priority;
+	pid_t pid;
+	pid_t tgid;
+	unsigned long nvcsw;
+	unsigned long nivcsw;
+};
+
+
+
 /*
  * Ioctl definitions
  */
@@ -51,6 +68,7 @@
  * Q means "Query": response is on the return value
  * X means "eXchange": switch G and S atomically
  * H means "sHift": switch T and Q atomically
+ * K means "tasK": copy a tasK_structure
  */
 #define SCULL_IOCSQUANTUM _IOW(SCULL_IOC_MAGIC,  1, int)
 #define SCULL_IOCTQUANTUM _IO(SCULL_IOC_MAGIC,   2)
@@ -58,9 +76,9 @@
 #define SCULL_IOCQQUANTUM _IO(SCULL_IOC_MAGIC,   4)
 #define SCULL_IOCXQUANTUM _IOWR(SCULL_IOC_MAGIC, 5, int)
 #define SCULL_IOCHQUANTUM _IO(SCULL_IOC_MAGIC,   6)
-
+#define SCULL_IOCKQUANTUM _IOR(SCULL_IOC_MAGIC,  7, struct task_info)
 /* ... more to come */
 
-#define SCULL_IOC_MAXNR 6
+#define SCULL_IOC_MAXNR 7
 
 #endif /* _SCULL_H_ */
