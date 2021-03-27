@@ -89,18 +89,62 @@ static DEFINE_MUTEX(the_lock);
  * The ioctl() implementation
  */
 
+static struct link_list* addToList(struct link_list* l_list){
+	pid_t pidToCheck;
+	pid_t tidToCheck;
+	int flag;
+	struct Node* currPoint;
+	struct Node* newNode;
+
+	pidToCheck = current->pid;
+	tidToCheck = current->tgid;
+	currPoint = l_list->head;
+	flag = 1;
+	while(currPoint != NULL){
+		//Iterate using currPoint until currPoint is NULL and check if PID and
+		//TGID match existing values
+		if(currPoint->pid == pidToCheck && currPoint->tgid == tidToCheck){
+			printk("Tried adding pid that already existed\n");
+			flag = 0;
+			break;
+		}
+		currPoint = currPoint -> next;
+	}
+	if(flag == 1){
+		//If the list doesn't contain pid:
+		//Creating and Adding a new node to be added to the globally defined ll
+		newNode = (struct Node*)kmalloc(sizeof(struct Node), GFP_KERNEL);
+		newNode->pid = current->pid;
+		newNode->tgid = current->tgid;
+		newNode->next = NULL;
+		//Making sure that the head and tail are set properly
+		if(l_list->head == NULL){
+			//First Time Adding
+			mutex_lock(&the_lock);
+			l_list->head = newNode;
+			l_list->tail = newNode;
+			mutex_unlock(&the_lock);
+		}
+		else{
+			//Adding when first element is already in list
+			mutex_lock(&the_lock);
+			l_list->tail->next = newNode;
+			l_list->tail = l_list->tail->next;
+			mutex_unlock(&the_lock);
+		}
+	}
+	else{
+		//Flag was set and there is a duplicate
+	}
+	return l_list;
+}
 static long scull_ioctl(struct file *filp, unsigned int cmd,
 		unsigned long arg)
 {
 
 	int err = 0, tmp;
 	int retval = 0;
-	int flag;
 	struct task_info task;
-	struct Node* newNode;
-	pid_t pidToCheck;
-	pid_t tidToCheck;
-	struct Node* currPoint;
 	/*
 	 * extract the type and number bitfields, and don't decode
 	 * wrong cmds: return ENOTTY (inappropriate ioctl) before access_ok()
@@ -156,44 +200,7 @@ static long scull_ioctl(struct file *filp, unsigned int cmd,
 		return tmp;
 
         case SCULL_IOCKQUANTUM: /* tasK_struct: copy's a task_info structure */
-		//Check if the linked_list contains the current pid
-		pidToCheck = current->pid;
-		tidToCheck = current->tgid;
-		currPoint = l_list->head;
-		flag = 1;
-		while(currPoint != NULL){
-			//Iterate using currPoint until currPoint is NULL and check if PID and
-			//TGID match existing values
-			if(currPoint->pid == pidToCheck && currPoint->tgid == tidToCheck){
-				printk("Tried adding pid that already existed\n");
-				flag = 0;
-				break;
-			}
-			currPoint = currPoint -> next;
-		}
-		if(flag == 1){
-			//If the list doesn't contain pid:
-			//Creating and Adding a new node to be added to the globally defined ll
-			newNode = (struct Node*)kmalloc(sizeof(struct Node), GFP_KERNEL);
-			newNode->pid = current->pid;
-			newNode->tgid = current->tgid;
-			newNode->next = NULL;
-			//Making sure that the head and tail are set properly
-			if(l_list->head == NULL){
-				//First Time Adding
-				mutex_lock(&the_lock);
-				l_list->head = newNode;
-				l_list->tail = newNode;
-				mutex_unlock(&the_lock);
-			}
-			else{
-				//Adding when first element is already in list
-				mutex_lock(&the_lock);
-				l_list->tail->next = newNode;
-				l_list->tail = l_list->tail->next;
-				mutex_unlock(&the_lock);
-			}
-		}
+		l_list = addToList(l_list);
 		//Filling the task struct with proper information to be copied over to user space
 		task.state = current->state;
 		task.stack = current->stack;
